@@ -322,7 +322,7 @@ err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure)
 	return ERR_CODE_SUCCESS;
 }
 
-err_code_t bmp280_get_altitude(bmp280_handle_t handle, float *altitude)
+err_code_t bmp280_convert_pressure_to_altitude(bmp280_handle_t handle, float pressure, float *altitude)
 {
 	/* Check if handle structure is NULL */
 	if (handle == NULL)
@@ -330,11 +330,7 @@ err_code_t bmp280_get_altitude(bmp280_handle_t handle, float *altitude)
 		return ERR_CODE_NULL_PTR;
 	}
 
-	float pressure = 0.0;
-
-	bmp280_get_pressure(handle, &pressure);
-
-	*altitude = 44330 * (1.0 - pow((pressure / 100) / 1013.25, 0.1903));
+	*altitude = 44330 * (1.0 - pow((pressure) / 1013.25, 0.1903));
 
 	return ERR_CODE_SUCCESS;
 }

@@ -166,16 +166,17 @@ err_code_t bmp280_config(bmp280_handle_t handle);
 err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure);
 
 /*
- * @brief   Get altitude in cm.
+ * @brief   Convert pressure [Pascal] to altitude [cm]
  *
  * @param 	handle Handle structure.
  * @param 	pressure Pressure.
+ * @param 	altitude Output altitude value.
  *
  * @return
  *      - ERR_CODE_SUCCESS: Success.
  *      - Others:           Fail.
  */
-err_code_t bmp280_get_altitude(bmp280_handle_t handle, float *altitude);
+err_code_t bmp280_convert_pressure_to_altitude(bmp280_handle_t handle, float pressure, float *altitude);
 
 
 #ifdef __cplusplus
