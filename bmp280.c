@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "math.h"
 #include "bmp280.h"
 
 /**
@@ -109,7 +110,7 @@ static err_code_t bmp280_recv(bmp280_handle_t handle, uint8_t reg_addr, uint8_t 
 {
 	if (handle->comm_mode == BMP280_COMM_MODE_I2C)
 	{
-		handle->i2c_send(reg_addr, buf_recv, len);
+		handle->i2c_recv(reg_addr, buf_recv, len);
 	}
 	else
 	{
@@ -128,6 +129,25 @@ static err_code_t bmp280_recv(bmp280_handle_t handle, uint8_t reg_addr, uint8_t 
 			handle->set_cs(BMP280_CS_UNACTIVE);
 		}
 	}
+
+	return ERR_CODE_SUCCESS;
+}
+
+static err_code_t bmp280_get_temperature(bmp280_handle_t handle, float *temperature)
+{
+	/* Check if handle structure is NULL */
+	if (handle == NULL)
+	{
+		return ERR_CODE_NULL_PTR;
+	}
+
+	int32_t adc_temp, fine_temp;
+	uint8_t reg_data[3];
+
+	bmp280_recv(handle, BMP280_REG_TEMP_MSB, reg_data, 3);
+
+	adc_temp = (reg_data[0] << 12) | (reg_data[1] << 4) | (reg_data[2] >> 4);
+	bmp280_compensate_temperature(handle, adc_temp, temperature, &fine_temp);
 
 	return ERR_CODE_SUCCESS;
 }
@@ -220,6 +240,14 @@ err_code_t bmp280_config(bmp280_handle_t handle)
 	uint16_t dig_T1, dig_P1;
 	int16_t dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9;
 
+	uint8_t reg_chipid = 0;
+
+	bmp280_recv(handle, BMP280_REG_ID, &reg_chipid, 1);
+	if (reg_chipid != 0x58)
+	{
+		return ERR_CODE_FAIL;
+	}
+
 	/* Soft reset */
 	cmd_data = BMP280_RESET_VALUE;
 	bmp280_send(handle, BMP280_REG_RESET, &cmd_data, 1);
@@ -290,25 +318,6 @@ err_code_t bmp280_config(bmp280_handle_t handle)
 	return ERR_CODE_SUCCESS;
 }
 
-err_code_t bmp280_get_temperature(bmp280_handle_t handle, float *temperature)
-{
-	/* Check if handle structure is NULL */
-	if (handle == NULL)
-	{
-		return ERR_CODE_NULL_PTR;
-	}
-
-	int32_t adc_temp, fine_temp;
-	uint8_t reg_data[3];
-
-	bmp280_recv(handle, BMP280_REG_TEMP_MSB, reg_data, 3);
-
-	adc_temp = (reg_data[0] << 12) | (reg_data[1] << 4) | (reg_data[2] >> 4);
-	bmp280_compensate_temperature(handle, adc_temp, temperature, &fine_temp);
-
-	return ERR_CODE_SUCCESS;
-}
-
 err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure)
 {
 	/* Check if handle structure is NULL */
@@ -328,6 +337,23 @@ err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure)
 
 	bmp280_compensate_temperature(handle, adc_temp, &temperature, &fine_temp);
 	bmp280_compensate_pressure(handle, adc_pressure, fine_temp, pressure);
+
+	return ERR_CODE_SUCCESS;
+}
+
+err_code_t bmp280_get_altitude(bmp280_handle_t handle, float *altitude)
+{
+	/* Check if handle structure is NULL */
+	if (handle == NULL)
+	{
+		return ERR_CODE_NULL_PTR;
+	}
+
+	float pressure = 0.0;
+
+	bmp280_get_pressure(handle, &pressure);
+
+	*altitude = 44330 * (1.0 - pow((pressure / 100) / 1013.25, 0.1903));
 
 	return ERR_CODE_SUCCESS;
 }

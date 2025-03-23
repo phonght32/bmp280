@@ -49,8 +49,8 @@ typedef struct bmp280 *bmp280_handle_t;
  */
 typedef enum {
 	BMP280_OPR_MODE_SLEEP = 0,						/*!< Sleep mode */
-	BMP280_OPR_MODE_FORCED,							/*!< Measurement is initiated by user */
-	BMP280_OPR_MODE_NORMAL							/*!< Continoues measurement */
+	BMP280_OPR_MODE_FORCED = 1,						/*!< Measurement is initiated by user */
+	BMP280_OPR_MODE_NORMAL = 3						/*!< Continoues measurement */
 } bmp280_opr_mode_t;
 
 /**
@@ -154,18 +154,6 @@ err_code_t bmp280_set_config(bmp280_handle_t handle, bmp280_cfg_t config);
 err_code_t bmp280_config(bmp280_handle_t handle);
 
 /*
- * @brief   Get temperature in degree Celsius.
- *
- * @param 	handle Handle structure.
- * @param 	temperature Temperature.
- *
- * @return
- *      - ERR_CODE_SUCCESS: Success.
- *      - Others:           Fail.
- */
-err_code_t bmp280_get_temperature(bmp280_handle_t handle, float *temperature);
-
-/*
  * @brief   Get pressure in Pascal.
  *
  * @param 	handle Handle structure.
@@ -176,6 +164,18 @@ err_code_t bmp280_get_temperature(bmp280_handle_t handle, float *temperature);
  *      - Others:           Fail.
  */
 err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure);
+
+/*
+ * @brief   Get altitude in cm.
+ *
+ * @param 	handle Handle structure.
+ * @param 	pressure Pressure.
+ *
+ * @return
+ *      - ERR_CODE_SUCCESS: Success.
+ *      - Others:           Fail.
+ */
+err_code_t bmp280_get_altitude(bmp280_handle_t handle, float *altitude);
 
 
 #ifdef __cplusplus
