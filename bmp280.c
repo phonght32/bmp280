@@ -133,25 +133,6 @@ static err_code_t bmp280_recv(bmp280_handle_t handle, uint8_t reg_addr, uint8_t 
 	return ERR_CODE_SUCCESS;
 }
 
-static err_code_t bmp280_get_temperature(bmp280_handle_t handle, float *temperature)
-{
-	/* Check if handle structure is NULL */
-	if (handle == NULL)
-	{
-		return ERR_CODE_NULL_PTR;
-	}
-
-	int32_t adc_temp, fine_temp;
-	uint8_t reg_data[3];
-
-	bmp280_recv(handle, BMP280_REG_TEMP_MSB, reg_data, 3);
-
-	adc_temp = (reg_data[0] << 12) | (reg_data[1] << 4) | (reg_data[2] >> 4);
-	bmp280_compensate_temperature(handle, adc_temp, temperature, &fine_temp);
-
-	return ERR_CODE_SUCCESS;
-}
-
 static err_code_t bmp280_compensate_temperature(bmp280_handle_t handle, int32_t adc_temp, float *temp, int32_t *fine_temp) {
 	int32_t var1, var2;
 
