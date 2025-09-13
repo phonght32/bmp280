@@ -319,6 +319,9 @@ err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure)
 	bmp280_compensate_temperature(handle, adc_temp, &temperature, &fine_temp);
 	bmp280_compensate_pressure(handle, adc_pressure, fine_temp, pressure);
 
+	/* Convert Pa to hPa */
+	*pressure /= 100.0f;
+
 	return ERR_CODE_SUCCESS;
 }
 
