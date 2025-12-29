@@ -27,16 +27,23 @@
 extern "C" {
 #endif
 
-#include "err_code.h"
+#include "stdint.h"
 
 #define BMP280_I2C_ADDR_0			0x76
 #define BMP280_I2C_ADDR_1			0x77
 
-typedef err_code_t (*bmp280_func_i2c_send)(uint8_t reg_addr, uint8_t *buf_send, uint16_t len);
-typedef err_code_t (*bmp280_func_i2c_recv)(uint8_t reg_addr, uint8_t *buf_recv, uint16_t len);
-typedef err_code_t (*bmp280_func_spi_send)(uint8_t *buf_send, uint16_t len);
-typedef err_code_t (*bmp280_func_spi_recv)(uint8_t *buf_recv, uint16_t len);
-typedef err_code_t (*bmp280_func_set_gpio)(uint8_t level);
+typedef enum 
+{
+	BMP280_STATUS_SUCCESS = 0,
+	BMP280_STATUS_FAILED,
+	BMP280_STATUS_INVALID_ARG
+} bmp280_status_t;
+
+typedef bmp280_status_t (*bmp280_func_i2c_send)(uint8_t reg_addr, uint8_t *buf_send, uint16_t len);
+typedef bmp280_status_t (*bmp280_func_i2c_recv)(uint8_t reg_addr, uint8_t *buf_recv, uint16_t len);
+typedef bmp280_status_t (*bmp280_func_spi_send)(uint8_t *buf_send, uint16_t len);
+typedef bmp280_status_t (*bmp280_func_spi_recv)(uint8_t *buf_recv, uint16_t len);
+typedef bmp280_status_t (*bmp280_func_set_gpio)(uint8_t level);
 typedef void (*bmp280_func_delay)(uint32_t ms);
 
 /**
@@ -126,7 +133,7 @@ typedef struct {
  *
  * @return
  *      - Handle structure: Success.
- *      - Others:           Fail.
+ *      - Others: Failed.
  */
 bmp280_handle_t bmp280_init(void);
 
@@ -137,10 +144,10 @@ bmp280_handle_t bmp280_init(void);
  * @param   config Configuration structure.
  *
  * @return
- *      - ERR_CODE_SUCCESS: Success.
- *      - Others:           Fail.
+ *      - BMP280_STATUS_SUCCESS: Success.
+ *      - Others: Failed.
  */
-err_code_t bmp280_set_config(bmp280_handle_t handle, bmp280_cfg_t config);
+bmp280_status_t bmp280_set_config(bmp280_handle_t handle, bmp280_cfg_t config);
 
 /*
  * @brief   Configure BMP280 to run.
@@ -148,10 +155,10 @@ err_code_t bmp280_set_config(bmp280_handle_t handle, bmp280_cfg_t config);
  * @param 	handle Handle structure.
  *
  * @return
- *      - ERR_CODE_SUCCESS: Success.
- *      - Others:           Fail.
+ *      - BMP280_STATUS_SUCCESS: Success.
+ *      - Others: Failed.
  */
-err_code_t bmp280_config(bmp280_handle_t handle);
+bmp280_status_t bmp280_config(bmp280_handle_t handle);
 
 /*
  * @brief   Get pressure in Pascal.
@@ -160,10 +167,10 @@ err_code_t bmp280_config(bmp280_handle_t handle);
  * @param 	pressure Pressure.
  *
  * @return
- *      - ERR_CODE_SUCCESS: Success.
- *      - Others:           Fail.
+ *      - BMP280_STATUS_SUCCESS: Success.
+ *      - Others: Failed.
  */
-err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure);
+bmp280_status_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure);
 
 /*
  * @brief   Convert pressure [Pascal] to altitude [cm]
@@ -173,10 +180,10 @@ err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure);
  * @param 	altitude Output altitude value.
  *
  * @return
- *      - ERR_CODE_SUCCESS: Success.
- *      - Others:           Fail.
+ *      - BMP280_STATUS_SUCCESS: Success.
+ *      - Others: Failed.
  */
-err_code_t bmp280_convert_pressure_to_altitude(bmp280_handle_t handle, float pressure, float *altitude);
+bmp280_status_t bmp280_convert_pressure_to_altitude(bmp280_handle_t handle, float pressure, float *altitude);
 
 
 #ifdef __cplusplus

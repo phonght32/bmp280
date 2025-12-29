@@ -78,7 +78,7 @@ typedef struct bmp280 {
 	int16_t  					dig_P9;						/*!< Pressure compensation dig_P9 */
 } bmp280_t;
 
-static err_code_t bmp280_send(bmp280_handle_t handle, uint8_t reg_addr, uint8_t *buf_send, uint16_t len)
+static bmp280_status_t bmp280_send(bmp280_handle_t handle, uint8_t reg_addr, uint8_t *buf_send, uint16_t len)
 {
 	if (handle->comm_mode == BMP280_COMM_MODE_I2C)
 	{
@@ -103,10 +103,10 @@ static err_code_t bmp280_send(bmp280_handle_t handle, uint8_t reg_addr, uint8_t 
 		}
 	}
 
-	return ERR_CODE_SUCCESS;
+	return BMP280_STATUS_SUCCESS;
 }
 
-static err_code_t bmp280_recv(bmp280_handle_t handle, uint8_t reg_addr, uint8_t *buf_recv, uint16_t len)
+static bmp280_status_t bmp280_recv(bmp280_handle_t handle, uint8_t reg_addr, uint8_t *buf_recv, uint16_t len)
 {
 	if (handle->comm_mode == BMP280_COMM_MODE_I2C)
 	{
@@ -130,10 +130,10 @@ static err_code_t bmp280_recv(bmp280_handle_t handle, uint8_t reg_addr, uint8_t 
 		}
 	}
 
-	return ERR_CODE_SUCCESS;
+	return BMP280_STATUS_SUCCESS;
 }
 
-static err_code_t bmp280_compensate_temperature(bmp280_handle_t handle, int32_t adc_temp, float *temp, int32_t *fine_temp) {
+static bmp280_status_t bmp280_compensate_temperature(bmp280_handle_t handle, int32_t adc_temp, float *temp, int32_t *fine_temp) {
 	int32_t var1, var2;
 
 	var1 = ((((adc_temp >> 3) - ((int32_t) handle->dig_T1 << 1))) * (int32_t) handle->dig_T2) >> 11;
@@ -142,10 +142,10 @@ static err_code_t bmp280_compensate_temperature(bmp280_handle_t handle, int32_t 
 	*fine_temp = var1 + var2;
 	*temp = ((*fine_temp * 5 + 128) >> 8) / 100;
 
-	return ERR_CODE_SUCCESS;
+	return BMP280_STATUS_SUCCESS;
 }
 
-static err_code_t bmp280_compensate_pressure(bmp280_handle_t handle, int32_t adc_press, int32_t fine_temp, float *pressure)
+static bmp280_status_t bmp280_compensate_pressure(bmp280_handle_t handle, int32_t adc_press, int32_t fine_temp, float *pressure)
 {
 	int64_t var1, var2, p;
 
@@ -159,7 +159,7 @@ static err_code_t bmp280_compensate_pressure(bmp280_handle_t handle, int32_t adc
 	/* Avoid exception caused by division by zero */
 	if (var1 == 0)
 	{
-		return ERR_CODE_FAIL;
+		return BMP280_STATUS_FAILED;
 	}
 
 	p = 1048576 - adc_press;
@@ -169,7 +169,7 @@ static err_code_t bmp280_compensate_pressure(bmp280_handle_t handle, int32_t adc
 
 	*pressure = (((p + var1 + var2) >> 8) + ((int64_t) handle->dig_P7 << 4)) / 256;
 
-	return ERR_CODE_SUCCESS;
+	return BMP280_STATUS_SUCCESS;
 }
 
 bmp280_handle_t bmp280_init(void)
@@ -183,12 +183,12 @@ bmp280_handle_t bmp280_init(void)
 	return handle;
 }
 
-err_code_t bmp280_set_config(bmp280_handle_t handle, bmp280_cfg_t config)
+bmp280_status_t bmp280_set_config(bmp280_handle_t handle, bmp280_cfg_t config)
 {
 	/* Check if handle structure is NULL */
 	if (handle == NULL)
 	{
-		return ERR_CODE_NULL_PTR;
+		return BMP280_STATUS_INVALID_ARG;
 	}
 
 	handle->opr_mode 					= config.opr_mode;
@@ -205,15 +205,15 @@ err_code_t bmp280_set_config(bmp280_handle_t handle, bmp280_cfg_t config)
 	handle->set_cs  					= config.set_cs;
 	handle->delay 						= config.delay;
 
-	return ERR_CODE_SUCCESS;
+	return BMP280_STATUS_SUCCESS;
 }
 
-err_code_t bmp280_config(bmp280_handle_t handle)
+bmp280_status_t bmp280_config(bmp280_handle_t handle)
 {
 	/* Check if handle structure is NULL */
 	if (handle == NULL)
 	{
-		return ERR_CODE_NULL_PTR;
+		return BMP280_STATUS_INVALID_ARG;
 	}
 
 	uint8_t cmd_data = 0;
@@ -226,7 +226,7 @@ err_code_t bmp280_config(bmp280_handle_t handle)
 	bmp280_recv(handle, BMP280_REG_ID, &reg_chipid, 1);
 	if (reg_chipid != 0x58)
 	{
-		return ERR_CODE_FAIL;
+		return BMP280_STATUS_FAILED;
 	}
 
 	/* Soft reset */
@@ -247,7 +247,7 @@ err_code_t bmp280_config(bmp280_handle_t handle)
 		timeout_ms -= delay_step_ms;
 		if (timeout_ms == 0)
 		{
-			return ERR_CODE_FAIL;
+			return BMP280_STATUS_FAILED;
 		}
 
 		handle->delay(delay_step_ms);
@@ -296,15 +296,15 @@ err_code_t bmp280_config(bmp280_handle_t handle)
 	handle->dig_P8 = dig_P8;
 	handle->dig_P9 = dig_P9;
 
-	return ERR_CODE_SUCCESS;
+	return BMP280_STATUS_SUCCESS;
 }
 
-err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure)
+bmp280_status_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure)
 {
 	/* Check if handle structure is NULL */
 	if (handle == NULL)
 	{
-		return ERR_CODE_NULL_PTR;
+		return BMP280_STATUS_INVALID_ARG;
 	}
 
 	int32_t adc_temp, fine_temp, adc_pressure;
@@ -322,18 +322,18 @@ err_code_t bmp280_get_pressure(bmp280_handle_t handle, float *pressure)
 	/* Convert Pa to hPa */
 	*pressure /= 100.0f;
 
-	return ERR_CODE_SUCCESS;
+	return BMP280_STATUS_SUCCESS;
 }
 
-err_code_t bmp280_convert_pressure_to_altitude(bmp280_handle_t handle, float pressure, float *altitude)
+bmp280_status_t bmp280_convert_pressure_to_altitude(bmp280_handle_t handle, float pressure, float *altitude)
 {
 	/* Check if handle structure is NULL */
 	if (handle == NULL)
 	{
-		return ERR_CODE_NULL_PTR;
+		return BMP280_STATUS_INVALID_ARG;
 	}
 
 	*altitude = 44330 * (1.0 - pow((pressure) / 1013.25, 0.1903));
 
-	return ERR_CODE_SUCCESS;
+	return BMP280_STATUS_SUCCESS;
 }
